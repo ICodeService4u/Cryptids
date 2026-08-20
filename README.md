@@ -63,17 +63,41 @@ advertise options and crypto, and the announcement lists options, crypto,
 event contracts, and futures as "coming soon" — check the current state in
 the app before assuming an asset class is tradable.
 
-### Reported tool list
-
-No official Robinhood page enumerates the MCP tools; the list below is
-reported by third-party documentation of this endpoint and should be treated
-as unverified until you connect and run `/mcp` to see the live list.
+### Live tool list (observed 2026-08-20 via the connector)
 
 | Category | Tools |
 |---|---|
-| Read | `get_accounts`, `get_portfolio`, `get_equity_positions`, `get_equity_quotes`, `get_equity_orders`, `search` |
-| Watchlists | `get_watchlists`, `add_to_watchlist`, `update_watchlist` |
-| Trading | `review_equity_order`, `place_equity_order`, `cancel_equity_order` |
+| Accounts & portfolio | `get_accounts`, `get_portfolio`, `get_pnl_trade_history`, `get_realized_pnl`, `get_equity_tax_lots`, `get_limited_margin_upgrade_info` |
+| Equity data | `get_equity_quotes`, `get_equity_historicals`, `get_equity_fundamentals`, `get_equity_price_book`, `get_equity_technical_indicators`, `get_equity_tradability`, `get_financials`, `search` |
+| Equity trading | `review_equity_order`, `place_equity_order`, `cancel_equity_order`, `get_equity_orders`, `get_equity_positions` |
+| Options | `get_option_chains`, `get_option_quotes`, `get_option_instruments`, `get_option_historicals`, `get_option_positions`, `get_option_orders`, `review_option_order`, `place_option_order`, `cancel_option_order`, `exercise_option`, `cancel_option_exercise`, `get_option_level_upgrade_info` |
+| Indexes & earnings | `get_indexes`, `get_index_quotes`, `get_index_historicals`, `get_earnings_calendar`, `get_earnings_results` |
+| Watchlists | `get_watchlists`, `get_watchlist_items`, `create_watchlist`, `update_watchlist`, `add_to_watchlist`, `remove_from_watchlist`, `follow_watchlist`, `unfollow_watchlist`, `get_popular_watchlists`, `get_option_watchlist`, `add_option_to_watchlist`, `remove_option_from_watchlist` |
+| Scanners | `get_scans`, `create_scan`, `run_scan`, `update_scan_config`, `update_scan_filters`, `get_scanner_filter_specs` |
+
+**No crypto tools are exposed yet** despite Robinhood's marketing pages —
+crypto trading through this MCP is not possible until they appear.
+
+## Unattended operation (cloud, 24/7)
+
+This repo is set up to run as an autonomous trading loop in Claude Code cloud
+sessions, with the Robinhood server authorized as a claude.ai connector
+(named **Cryptids**) so no local machine needs to be on.
+
+- Four scheduled Routines ("Cryptids trading tick" at :01/:16/:31/:46) give a
+  15-minute cadence — the Routine scheduler's minimum interval is hourly, so
+  the cadence is built from four staggered hourly triggers. Each tick is a
+  fresh session that clones this repo.
+- [`CLAUDE.md`](CLAUDE.md) defines the hard operating rules for tick
+  sessions; [`STRATEGY.md`](STRATEGY.md) defines the strategy, caps, and the
+  `ARMED` master switch (currently **false**).
+- `.claude/settings.json` pre-approves the Robinhood connector tools so
+  unattended sessions never stall on a permission prompt, deny-lists option
+  placement/exercise, and deny-lists WebFetch/WebSearch so sessions holding
+  trade authority never ingest untrusted web content.
+
+To go live: fund the Agentic account, confirm crypto tools exist, enable the
+four Routines, and set `ARMED: true` in STRATEGY.md.
 
 ## Guardrails and risk — read before trading
 
