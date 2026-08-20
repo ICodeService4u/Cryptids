@@ -104,8 +104,15 @@ sessions, with the Robinhood server authorized as a claude.ai connector
   placement/exercise, and deny-lists WebFetch/WebSearch so sessions holding
   trade authority never ingest untrusted web content.
 
-To go live: fund the Agentic account, confirm crypto tools exist, enable the
-four Routines, and set `ARMED: true` in STRATEGY.md.
+A fifth Routine, "Cryptids crypto-tools watch (daily)" (7:23 AM MST), is a
+read-only reconnaissance tick: it enumerates the connector's tool list and
+pushes a notification only when crypto tools appear on Robinhood's agent API.
+It stays enabled while the trading ticks are paused, and holds no trade
+authority beyond what the connector exposes — its prompt forbids all writes.
+
+To go live: fund the Agentic account, wait for the crypto watch to report
+crypto tools (or confirm manually), enable the four trading-tick Routines,
+and set `ARMED: true` in STRATEGY.md.
 
 ## Guardrails and risk — read before trading
 
