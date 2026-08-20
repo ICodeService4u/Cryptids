@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__Cryptids",
+      "mcp__robinhood-trading"
+    ],
+    "deny": [
+      "mcp__Cryptids__place_option_order",
+      "mcp__Cryptids__exercise_option",
+      "mcp__robinhood-trading__place_option_order",
+      "mcp__robinhood-trading__exercise_option",
+      "WebFetch",
+      "WebSearch"
+    ]
+  },
+  "enabledMcpjsonServers": [
+    "robinhood-trading"
+  ]
+}
