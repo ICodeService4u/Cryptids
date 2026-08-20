@@ -86,8 +86,16 @@ sessions, with the Robinhood server authorized as a claude.ai connector
 
 - Four scheduled Routines ("Cryptids trading tick" at :01/:16/:31/:46) give a
   15-minute cadence — the Routine scheduler's minimum interval is hourly, so
-  the cadence is built from four staggered hourly triggers. Each tick is a
-  fresh session that clones this repo.
+  the cadence is built from four staggered hourly triggers.
+- **Create the Routines in the claude.ai → Code → Routines UI, not via the
+  API.** Verified by a live test fire (2026-08-20): a Routine minted from a
+  session via the API spawns sessions with **no repo checkout** (so no
+  CLAUDE.md/STRATEGY.md guardrails and no `.claude/settings.json`
+  permissions) and with the Cryptids connector **not enabled in the session**
+  (`enabledInChat: false`). The tick correctly failed closed — halted at
+  preflight, traded nothing, and pushed a notification. The Routines UI is
+  where the connector and repository can be bound to the routine so fired
+  sessions get both.
 - [`CLAUDE.md`](CLAUDE.md) defines the hard operating rules for tick
   sessions; [`STRATEGY.md`](STRATEGY.md) defines the strategy, caps, and the
   `ARMED` master switch (currently **false**).
