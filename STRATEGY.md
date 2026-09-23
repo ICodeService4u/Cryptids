@@ -8,34 +8,87 @@ the next tick.
 ARMED: false
 ```
 
+## Idea
+
+Buy fear, sell greed, hold through drawdowns. Buy only on sharp daily drops,
+and only when the new buy lowers the average cost. Every position rests a
+limit sell at +10% over its average cost. There are **no stop-losses**: a
+position that drops is held (and may be averaged down) until the take-profit
+fills. Every order is a **maker** limit order (0.5% fee at the starting
+tier, versus 0.95% taker).
+
 ## Target
 
 - Asset class: **crypto** (24/7). Do not trade equities or anything else.
-- Universe: BTC, ETH only until this line is edited.
+- Universe: **BTC, ETH, ADA, SOL, XRP** (pairs `<SYMBOL>-USD`) until this line
+  is edited. Skip a coin for the tick if `get_currency_pairs` shows it halted,
+  not `tradable`, or `market_orders_only`.
 
 ## Hard caps (per CLAUDE.md rule 2)
 
-- Max notional per order: $25
-- Max orders per tick: 1
-- Max total position: 50% of agentic-account value per asset
-- Daily loss halt: stop placing orders for the rest of the day once the
-  agentic account is down 5% from the day's starting value
+- Buy size: **$10.00** per buy order (`dollar_amount: "10.00"`).
+- New buy orders per tick: at most **1** (across all coins).
+- Buys per coin: at most **1 per rolling 24h** (count filled and still-open
+  buy orders placed by the loop, i.e. `initiator_type: agentic`).
+- Max position per coin: **30%** of the account's total value, counting the
+  coin's market value plus any open buy orders for it. A buy that would
+  cross this is skipped.
+- Cash: never place a buy that `crypto_buying_power` can't cover.
+- Buy halt: if the account is down **10% or more** today, place **no new
+  buys**. Take-profit sell maintenance (below) continues. "Today" is
+  estimated as `total_value` from `get_portfolio` versus
+  `cash + Σ(quantity × open_price)` over held coins, using `open_price`
+  (previous midnight close) from `get_crypto_quotes`. This is the only loss
+  rule — nothing is ever sold at a loss by this loop.
 
-## Decision rule (edit me — placeholder, intentionally conservative)
+## Maker-only execution
 
-Each tick:
+- Order type is always `limit`. Never `market`, `stop_loss` or `stop_limit`.
+- Buys: limit price = current **bid** rounded **down** to the pair's
+  `min_order_price_increment`. Never at or above the ask.
+- Sells: limit price is the take-profit price, and never below the current
+  **ask** (if price has already run past the target, use the ask, rounded
+  **up** to the increment).
+- Run `preview_crypto_order` first; place only if its `fee_rate` says
+  **maker**. If it says taker, or anything else differs from what was
+  intended, skip the order.
 
-1. Fetch current quotes and recent historicals for the universe.
-2. If flat and price is more than 3% below its 24h high → buy up to the
-   per-order cap.
-3. If holding and price is more than 2% above average cost, or more than 3%
-   below average cost → sell the position (take-profit / stop-loss).
-4. Otherwise do nothing. Doing nothing is the expected outcome of most ticks.
+## Each tick
+
+1. Gather: `get_portfolio`, `get_crypto_positions`, open orders
+   (`get_crypto_orders`, `state_group: open`), loop buy orders from the last
+   24h, `get_crypto_quotes` for the universe (pass `rhs_account_number`), and
+   `get_currency_pairs` constraints for the universe.
+2. **Stale buys.** Cancel any open loop buy order older than **60 minutes**.
+   Unfilled buys are re-decided fresh; a partial fill keeps its filled part.
+3. **Take-profit maintenance** (runs even under the buy halt). For each held
+   universe coin, the target is one open limit sell, entered by `quantity`,
+   for the full held quantity (including coins already reserved by the
+   loop's current sell), rounded down to `min_order_quantity_increment`, at
+   `average cost × 1.10` rounded up to the price increment.
+   If there's no such sell, or its quantity or price doesn't match (e.g. a
+   buy filled since it was placed), cancel the mismatched sell and place the
+   correct one. Leave a matching sell alone. If a position has no usable
+   cost basis, place no sell for it and report it as an anomaly.
+4. **Fear buy** (skip entirely under the buy halt). A coin qualifies when:
+   - `mark_price` is at least **4% below** `open_price` (previous close), and
+   - if already held: `mark_price` is also at least **5% below** its
+     average cost (so each buy lowers the average), and
+   - the per-coin 24h limit and 30% cap allow it.
+   If several qualify, buy the one with the largest drop versus
+   `open_price`. Place one $10 maker limit buy (see execution rules).
+5. Otherwise do nothing. Doing nothing is the expected outcome of most
+   ticks.
+
+Orders this loop manages are only those with `initiator_type: agentic` on
+universe coins. Never cancel or replace anything else.
 
 ## Status notes
 
-- 2026-08-20: Robinhood's MCP server exposes no crypto trading tools yet
-  (equities and options only, verified against the live tool list) and the
-  agentic account is unfunded. Until both change, every tick should stop at
-  preflight. Leave ARMED false until you have funded the account, confirmed
-  crypto tools exist, and reviewed the decision rule above.
+- 2026-09-23: Crypto tools are live on the connector (`get_crypto_*`,
+  `preview_crypto_order`, `place_crypto_order`, `cancel_crypto_order`). The
+  Agentic account is funded ($100) with a linked crypto account. Preview
+  verified: limit buy below the market → 0.5% maker; market buy → 0.95%
+  taker. All five universe pairs tradable, not halted, limit orders allowed.
+- There is no crypto historicals tool; `open_price` (previous midnight
+  close, US Eastern) is the only reference price besides average cost.
