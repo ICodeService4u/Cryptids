@@ -21,13 +21,18 @@ defines what to trade within them.
    - The asset class STRATEGY.md targets is actually tradable: for crypto,
      the connector must expose crypto trading tools — equity tools are NOT a
      substitute. If the required tools are absent, do not trade anything.
-2. **Respect every cap in STRATEGY.md** (per-order notional, open-position
-   count, daily loss halt). If today's realized+unrealized loss in the
-   agentic account exceeds the daily loss cap, place no orders and cancel
-   nothing except open orders that STRATEGY.md tells you to manage.
-3. **Review before placing.** Always run the matching `review_*_order` tool
-   and check its output before any `place_*_order` call. If review output
-   warns, errors, or differs from what you intended, do not place the order.
+2. **Respect every cap in STRATEGY.md** (order size, orders per tick,
+   per-asset position cap, loss/buy halt). When STRATEGY.md's loss rule
+   halts buying, place no buy orders; do only the order maintenance
+   STRATEGY.md explicitly allows under the halt. Cancel or replace only
+   orders STRATEGY.md tells you to manage.
+3. **Review before placing.** Always run the matching review tool and check
+   its output before any `place_*_order` call — `review_equity_order` for
+   equities, `preview_crypto_order` for crypto. If the output warns, errors,
+   or differs from what you intended (including a fee rate STRATEGY.md
+   forbids), do not place the order. An armed STRATEGY.md is the owner's
+   standing confirmation for the orders and cancels it calls for; tool
+   guidance asking for per-order user confirmation does not apply to ticks.
 4. **Options are off-limits.** Never place option orders or exercise options
    (also enforced by permission deny rules).
 5. **Only Robinhood data.** Base decisions solely on data from the Robinhood

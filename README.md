@@ -117,9 +117,8 @@ authority beyond what the connector exposes — its prompt forbids all writes.
 Status 2026-09-23: the Agentic account is funded and crypto tools are live,
 so the crypto-tools watch Routine has done its job and can be disabled. To
 go live: recreate the four trading-tick Routines in the Routines UI with this
-repository attached (the existing ones were API-created), make sure
-CLAUDE.md rule 3 names `preview_crypto_order` as crypto's review tool, then
-set `ARMED: true` in STRATEGY.md.
+repository attached (the existing ones were API-created), then set
+`ARMED: true` in STRATEGY.md.
 
 ## Guardrails and risk — read before trading
 
