@@ -5,7 +5,7 @@ Master switch for the scheduled trading ticks. The loop trades only while
 the next tick.
 
 ```
-ARMED: false
+ARMED: true
 ```
 
 ## Idea
