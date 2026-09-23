@@ -90,6 +90,8 @@ no usable cost basis.
    - `mark_price` is at least **4% below** `open_price` (previous close), and
    - if already held: `mark_price` is also at least **5% below** its
      average cost (so each buy lowers the average), and
+   - if already held, the position has a usable cost basis (see **Average
+     cost**) — a held coin without one never qualifies, and
    - it has no open loop buy order.
    Buy **every** qualifying coin, one $200 maker limit buy each (see
    execution rules), working from the largest drop versus `open_price` to
