@@ -50,6 +50,24 @@ tier, versus 0.95% taker).
   **maker**. If it says taker, or anything else differs from what was
   intended, skip the order.
 
+## Average cost
+
+Read it from the position itself (`get_crypto_positions`), never from order
+history or memory of past ticks. Summing over **every** entry in the coin's
+`cost_bases`:
+
+```
+average cost = (Σ direct_cost_basis + Σ intraday_cost_basis)
+             / (Σ direct_quantity   + Σ intraday_quantity)
+```
+
+Today's buys are reported under `intraday_*` and roll into `direct_*` after
+the day closes, so a coin bought across several days has part of its cost in
+each — always add both. The cost basis excludes the buy fee. If the summed
+quantity is 0, or differs from the position's `quantity` by more than one
+`min_order_quantity_increment` (units with no captured cost), the position has
+no usable cost basis.
+
 ## Each tick
 
 1. Gather: `get_portfolio`, `get_crypto_positions`, open orders
@@ -62,7 +80,8 @@ tier, versus 0.95% taker).
    universe coin, the target is one open limit sell, entered by `quantity`,
    for the full held quantity (including coins already reserved by the
    loop's current sell), rounded down to `min_order_quantity_increment`, at
-   `average cost × 1.10` rounded up to the price increment.
+   `average cost × 1.10` (see **Average cost**) rounded up to the price
+   increment.
    If there's no such sell, or its quantity or price doesn't match (e.g. a
    buy filled since it was placed), cancel the mismatched sell and place the
    correct one. Leave a matching sell alone. If a position has no usable
