@@ -27,12 +27,9 @@ tier, versus 0.95% taker).
 ## Hard caps (per CLAUDE.md rule 2)
 
 - Buy size: **$10.00** per buy order (`dollar_amount: "10.00"`).
-- New buy orders per tick: at most **1** (across all coins).
-- Buys per coin: at most **1 per rolling 24h** (count filled and still-open
-  buy orders placed by the loop, i.e. `initiator_type: agentic`).
-- Max position per coin: **30%** of the account's total value, counting the
-  coin's market value plus any open buy orders for it. A buy that would
-  cross this is skipped.
+- New buy orders per tick: at most **1 per coin** (so up to 5 per tick).
+- Open buys per coin: at most **1**. Never place a buy for a coin that
+  already has an open loop buy order (`initiator_type: agentic`).
 - Cash: never place a buy that `crypto_buying_power` can't cover.
 - Buy halt: if the account is down **10% or more** today, place **no new
   buys**. Take-profit sell maintenance (below) continues. "Today" is
@@ -56,9 +53,9 @@ tier, versus 0.95% taker).
 ## Each tick
 
 1. Gather: `get_portfolio`, `get_crypto_positions`, open orders
-   (`get_crypto_orders`, `state_group: open`), loop buy orders from the last
-   24h, `get_crypto_quotes` for the universe (pass `rhs_account_number`), and
-   `get_currency_pairs` constraints for the universe.
+   (`get_crypto_orders`, `state_group: open`), `get_crypto_quotes` for the
+   universe (pass `rhs_account_number`), and `get_currency_pairs`
+   constraints for the universe.
 2. **Stale buys.** Cancel any open loop buy order older than **60 minutes**.
    Unfilled buys are re-decided fresh; a partial fill keeps its filled part.
 3. **Take-profit maintenance** (runs even under the buy halt). For each held
@@ -74,9 +71,13 @@ tier, versus 0.95% taker).
    - `mark_price` is at least **4% below** `open_price` (previous close), and
    - if already held: `mark_price` is also at least **5% below** its
      average cost (so each buy lowers the average), and
-   - the per-coin 24h limit and 30% cap allow it.
-   If several qualify, buy the one with the largest drop versus
-   `open_price`. Place one $10 maker limit buy (see execution rules).
+   - it has no open loop buy order.
+   Buy **every** qualifying coin, one $10 maker limit buy each (see
+   execution rules), working from the largest drop versus `open_price` to
+   the smallest. Before each buy, re-check `crypto_buying_power` (open buys
+   placed earlier this tick reserve cash); if it can't cover the buy, stop
+   buying for this tick. If a preview or placement errors, stop buying for
+   this tick (CLAUDE.md rule 7).
 5. Otherwise do nothing. Doing nothing is the expected outcome of most
    ticks.
 
