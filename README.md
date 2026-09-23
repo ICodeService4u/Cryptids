@@ -55,13 +55,11 @@ place or manage orders — there's no server-side automation once you close it.
 - Read account numbers, balances, positions, transaction history, and
   watchlists across your Robinhood accounts
 - Get quotes, search instruments, and manage watchlists
-- Preview, place, cancel, and track equity orders in the dedicated Agentic
-  account
+- Preview, place, cancel, and track equity and crypto orders in the
+  dedicated Agentic account
 
-At launch the beta trades **equities only**. Robinhood's product pages
-advertise options and crypto, and the announcement lists options, crypto,
-event contracts, and futures as "coming soon" — check the current state in
-the app before assuming an asset class is tradable.
+The beta launched equities-only; crypto trading tools appeared on the
+connector by 2026-09-23 (see below).
 
 ### Live tool list (observed 2026-08-20 via the connector)
 
@@ -75,8 +73,14 @@ the app before assuming an asset class is tradable.
 | Watchlists | `get_watchlists`, `get_watchlist_items`, `create_watchlist`, `update_watchlist`, `add_to_watchlist`, `remove_from_watchlist`, `follow_watchlist`, `unfollow_watchlist`, `get_popular_watchlists`, `get_option_watchlist`, `add_option_to_watchlist`, `remove_option_from_watchlist` |
 | Scanners | `get_scans`, `create_scan`, `run_scan`, `update_scan_config`, `update_scan_filters`, `get_scanner_filter_specs` |
 
-**No crypto tools are exposed yet** despite Robinhood's marketing pages —
-crypto trading through this MCP is not possible until they appear.
+**Crypto tools (observed 2026-09-23):** `get_currency_pairs`,
+`get_crypto_quotes`, `get_crypto_positions`, `get_crypto_orders`,
+`preview_crypto_order`, `place_crypto_order`, `cancel_crypto_order`,
+`get_crypto_account_onboarding_info`. Crypto uses `preview_crypto_order`
+(not a `review_*` tool) and takes the numeric `rhs_account_number`. There is
+no crypto historicals tool — quotes carry bid/ask/mark plus the previous
+midnight close (`open_price`). Fees seen in preview at the starting tier:
+0.5% maker (resting limit orders), 0.95% taker (market orders).
 
 ## Unattended operation (cloud, 24/7)
 
@@ -110,9 +114,11 @@ pushes a notification only when crypto tools appear on Robinhood's agent API.
 It stays enabled while the trading ticks are paused, and holds no trade
 authority beyond what the connector exposes — its prompt forbids all writes.
 
-To go live: fund the Agentic account, wait for the crypto watch to report
-crypto tools (or confirm manually), enable the four trading-tick Routines,
-and set `ARMED: true` in STRATEGY.md.
+Status 2026-09-23: the Agentic account is funded and crypto tools are live,
+so the crypto-tools watch Routine has done its job and can be disabled. To
+go live: recreate the four trading-tick Routines in the Routines UI with this
+repository attached (the existing ones were API-created), then set
+`ARMED: true` in STRATEGY.md.
 
 ## Guardrails and risk — read before trading
 
