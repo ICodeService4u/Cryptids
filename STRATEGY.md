@@ -26,7 +26,7 @@ tier, versus 0.95% taker).
 
 ## Hard caps (per CLAUDE.md rule 2)
 
-- Buy size: **$10.00** per buy order (`dollar_amount: "10.00"`).
+- Buy size: **$200.00** per buy order (`dollar_amount: "200.00"`).
 - New buy orders per tick: at most **1 per coin** (so up to 5 per tick).
 - Open buys per coin: at most **1**. Never place a buy for a coin that
   already has an open loop buy order (`initiator_type: agentic`).
@@ -91,7 +91,7 @@ no usable cost basis.
    - if already held: `mark_price` is also at least **5% below** its
      average cost (so each buy lowers the average), and
    - it has no open loop buy order.
-   Buy **every** qualifying coin, one $10 maker limit buy each (see
+   Buy **every** qualifying coin, one $200 maker limit buy each (see
    execution rules), working from the largest drop versus `open_price` to
    the smallest. Before each buy, re-check `crypto_buying_power` (open buys
    placed earlier this tick reserve cash); if it can't cover the buy, stop
