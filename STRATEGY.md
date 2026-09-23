@@ -28,8 +28,8 @@ tier, versus 0.95% taker).
 
 - Buy size: **$10.00** per buy order (`dollar_amount: "10.00"`).
 - New buy orders per tick: at most **1 per coin** (so up to 5 per tick).
-- Buys per coin: at most **1 per rolling 24h** (count filled and still-open
-  buy orders placed by the loop, i.e. `initiator_type: agentic`).
+- Open buys per coin: at most **1**. Never place a buy for a coin that
+  already has an open loop buy order (`initiator_type: agentic`).
 - Cash: never place a buy that `crypto_buying_power` can't cover.
 - Buy halt: if the account is down **10% or more** today, place **no new
   buys**. Take-profit sell maintenance (below) continues. "Today" is
@@ -53,9 +53,9 @@ tier, versus 0.95% taker).
 ## Each tick
 
 1. Gather: `get_portfolio`, `get_crypto_positions`, open orders
-   (`get_crypto_orders`, `state_group: open`), loop buy orders from the last
-   24h, `get_crypto_quotes` for the universe (pass `rhs_account_number`), and
-   `get_currency_pairs` constraints for the universe.
+   (`get_crypto_orders`, `state_group: open`), `get_crypto_quotes` for the
+   universe (pass `rhs_account_number`), and `get_currency_pairs`
+   constraints for the universe.
 2. **Stale buys.** Cancel any open loop buy order older than **60 minutes**.
    Unfilled buys are re-decided fresh; a partial fill keeps its filled part.
 3. **Take-profit maintenance** (runs even under the buy halt). For each held
@@ -71,7 +71,7 @@ tier, versus 0.95% taker).
    - `mark_price` is at least **4% below** `open_price` (previous close), and
    - if already held: `mark_price` is also at least **5% below** its
      average cost (so each buy lowers the average), and
-   - the per-coin 24h limit allows it.
+   - it has no open loop buy order.
    Buy **every** qualifying coin, one $10 maker limit buy each (see
    execution rules), working from the largest drop versus `open_price` to
    the smallest. Before each buy, re-check `crypto_buying_power` (open buys
