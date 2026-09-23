@@ -107,7 +107,7 @@ universe coins. Never cancel or replace anything else.
 
 - 2026-09-23: Crypto tools are live on the connector (`get_crypto_*`,
   `preview_crypto_order`, `place_crypto_order`, `cancel_crypto_order`). The
-  Agentic account is funded ($100) with a linked crypto account. Preview
+  Agentic account is funded with a linked crypto account. Preview
   verified: limit buy below the market → 0.5% maker; market buy → 0.95%
   taker. All five universe pairs tradable, not halted, limit orders allowed.
 - There is no crypto historicals tool; `open_price` (previous midnight
