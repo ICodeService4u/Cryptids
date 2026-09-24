@@ -102,7 +102,7 @@ sessions, with the Robinhood server authorized as a claude.ai connector
   sessions get both.
 - [`CLAUDE.md`](CLAUDE.md) defines the hard operating rules for tick
   sessions; [`STRATEGY.md`](STRATEGY.md) defines the strategy, caps, and the
-  `ARMED` master switch (currently **false**).
+  `ARMED` master switch (currently **true**).
 - `.claude/settings.json` pre-approves the Robinhood connector tools so
   unattended sessions never stall on a permission prompt, deny-lists option
   placement/exercise, and deny-lists WebFetch/WebSearch so sessions holding
@@ -111,14 +111,14 @@ sessions, with the Robinhood server authorized as a claude.ai connector
 A fifth Routine, "Cryptids crypto-tools watch (daily)" (7:23 AM MST), is a
 read-only reconnaissance tick: it enumerates the connector's tool list and
 pushes a notification only when crypto tools appear on Robinhood's agent API.
-It stays enabled while the trading ticks are paused, and holds no trade
-authority beyond what the connector exposes — its prompt forbids all writes.
+It holds no trade authority beyond what the connector exposes — its prompt
+forbids all writes. Disabled since 2026-09-23, when crypto tools went live.
 
-Status 2026-09-23: the Agentic account is funded and crypto tools are live,
-so the crypto-tools watch Routine has done its job and can be disabled. To
-go live: recreate the four trading-tick Routines in the Routines UI with this
-repository attached (the existing ones were API-created), then set
-`ARMED: true` in STRATEGY.md.
+Status 2026-09-24: live. `ARMED: true`, and the four trading-tick Routines
+are enabled. Tick summaries follow CLAUDE.md and STRATEGY.md, which shows
+fired sessions get the repository checkout. The connector returns all-zero
+cost bases for some positions; STRATEGY.md's **Average cost** section falls
+back to deriving the cost from the loop's own sell in that case.
 
 ## Guardrails and risk — read before trading
 
