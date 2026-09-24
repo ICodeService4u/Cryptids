@@ -52,8 +52,11 @@ tier, versus 0.95% taker).
 
 ## Average cost
 
-Read it from the position itself (`get_crypto_positions`), never from order
-history or memory of past ticks. Summing over **every** entry in the coin's
+Never from memory of past ticks. Use the first source that works; if
+neither does, the position has **no usable cost basis**.
+
+**1. Position cost basis.** From the position itself
+(`get_crypto_positions`), summing over **every** entry in the coin's
 `cost_bases`:
 
 ```
@@ -63,10 +66,35 @@ average cost = (Σ direct_cost_basis + Σ intraday_cost_basis)
 
 Today's buys are reported under `intraday_*` and roll into `direct_*` after
 the day closes, so a coin bought across several days has part of its cost in
-each — always add both. The cost basis excludes the buy fee. If the summed
-quantity is 0, or differs from the position's `quantity` by more than one
-`min_order_quantity_increment` (units with no captured cost), the position has
-no usable cost basis.
+each — always add both. The cost basis excludes the buy fee. Usable only if
+the summed quantity is above 0 and within one `min_order_quantity_increment`
+of the position's `quantity`.
+
+**2. Derived from the loop's sell** (fallback when source 1 isn't usable —
+the connector has been seen returning all-zero `cost_bases`). Every loop
+sell is priced at average cost × 1.10, so it records the average cost of
+the units it covers. Requires exactly one open loop sell on the coin (the
+**anchor**):
+
+```
+anchor qty  = anchor quantity − anchor cumulative_quantity
+anchor cost = anchor qty × anchor price / 1.10
+new fills   = loop buys on the coin (side buy, initiator_type agentic,
+              cumulative_quantity > 0) with updated_at ≥ anchor created_at
+average cost = (anchor cost + Σ new-fill average_price × cumulative_quantity)
+             / (anchor qty  + Σ new-fill cumulative_quantity)
+```
+
+Fetch the new fills with `get_crypto_orders` (`symbol`, `side: buy`,
+`created_at_gte` a day before the anchor's `created_at`, then filter).
+Usable only if `anchor qty + Σ new-fill quantity` is within one
+`min_order_quantity_increment` of the position's `quantity`; otherwise the
+units can't be accounted for. Report which source you used in the summary
+whenever it is source 2.
+
+Rounding the sell price up makes the derived cost read at most one price
+increment ÷ 1.10 high, which is acceptable. The derivation is only as good
+as the anchor, so under source 2 never price a sell at the ask (see step 3).
 
 ## Each tick
 
@@ -84,15 +112,16 @@ no usable cost basis.
    increment.
    If there's no such sell, or its quantity or price doesn't match (e.g. a
    buy filled since it was placed), cancel the mismatched sell and place the
-   correct one. Leave a matching sell alone. If a position has no usable
-   cost basis, its target price can't be checked:
-   - If the coin has exactly one open loop sell for the full held quantity
-     (rounded as above), leave it untouched — never cancel or replace it
-     while the cost basis is missing. This is a known connector data gap,
-     not an anomaly: note it in one line in the summary and continue the
-     tick normally.
-   - Otherwise (no loop sell, or its quantity doesn't match), place no
-     sell for it and report it as an anomaly.
+   correct one. Leave a matching sell alone; a price within one price
+   increment of the target counts as matching (dividing by 1.10 and
+   multiplying back can round up a step). Work out the new sell's
+   price and quantity **before** cancelling the old one — under source 2
+   the old sell is the anchor. If the replacement can't be placed after the
+   cancel, that is a write error (CLAUDE.md rule 7).
+   Under source 2, if the target price is below the current ask, leave the
+   existing sell as it is this tick instead of placing a sell at the ask.
+   If a position has no usable cost basis, place no sell for it, cancel
+   nothing on it, and report it as an anomaly.
 4. **Fear buy** (skip entirely under the buy halt). A coin qualifies when:
    - `mark_price` is at least **4% below** `open_price` (previous close), and
    - if already held: `mark_price` is also at least **5% below** its
@@ -123,5 +152,5 @@ universe coins. Never cancel or replace anything else.
   close, US Eastern) is the only reference price besides average cost.
 - 2026-09-24: `get_crypto_positions` returns all-zero `cost_bases` for the
   XRP and ADA positions bought 2026-09-23, although the Robinhood app shows
-  their average costs. Their take-profit sells were placed from the fills
-  before the gap and are left as-is (see step 3).
+  their average costs (XRP ≈ 1.504, ADA ≈ 0.23844). Average cost falls back
+  to source 2 (derived from the loop's sell) for such positions.
