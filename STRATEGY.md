@@ -85,7 +85,14 @@ no usable cost basis.
    If there's no such sell, or its quantity or price doesn't match (e.g. a
    buy filled since it was placed), cancel the mismatched sell and place the
    correct one. Leave a matching sell alone. If a position has no usable
-   cost basis, place no sell for it and report it as an anomaly.
+   cost basis, its target price can't be checked:
+   - If the coin has exactly one open loop sell for the full held quantity
+     (rounded as above), leave it untouched — never cancel or replace it
+     while the cost basis is missing. This is a known connector data gap,
+     not an anomaly: note it in one line in the summary and continue the
+     tick normally.
+   - Otherwise (no loop sell, or its quantity doesn't match), place no
+     sell for it and report it as an anomaly.
 4. **Fear buy** (skip entirely under the buy halt). A coin qualifies when:
    - `mark_price` is at least **4% below** `open_price` (previous close), and
    - if already held: `mark_price` is also at least **5% below** its
@@ -114,3 +121,7 @@ universe coins. Never cancel or replace anything else.
   taker. All five universe pairs tradable, not halted, limit orders allowed.
 - There is no crypto historicals tool; `open_price` (previous midnight
   close, US Eastern) is the only reference price besides average cost.
+- 2026-09-24: `get_crypto_positions` returns all-zero `cost_bases` for the
+  XRP and ADA positions bought 2026-09-23, although the Robinhood app shows
+  their average costs. Their take-profit sells were placed from the fills
+  before the gap and are left as-is (see step 3).
