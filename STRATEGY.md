@@ -141,6 +141,23 @@ as the anchor, so under source 2 never price a sell at the ask (see step 3).
 Orders this loop manages are only those with `initiator_type: agentic` on
 universe coins. Never cancel or replace anything else.
 
+## Owner-authorized manual orders
+
+The owner sometimes trades the Agentic account by hand through the same
+connector, so those orders also show `initiator_type: agentic`. Orders
+listed here are the owner's, not the loop's and not an anomaly: don't
+flag them. They are all closed; there is nothing to manage.
+
+- 2026-09-24 22:37–22:42 ET (2026-09-25 02:37–02:42 UTC): owner exited
+  ADA and XRP. Cancelled the loop's take-profit sells, re-placed sells at a
+  lower price and cancelled those too, then sold both at market:
+  - ADA limit sell `6ab5de97-b731-42a9-a3d6-8edca145566b` (canceled)
+  - XRP limit sell `6ab5de9e-6772-46ce-890f-a7472dec1d81` (canceled)
+  - XRP market sell `6ab5df88-b978-4f50-ba66-f24199473987`, 132.317 filled
+  - ADA market sell `6ab5df8b-7265-425e-9fcf-a0d328657e41`, 834.6 filled
+
+  Afterwards the account held no crypto and no open orders, only cash.
+
 ## Status notes
 
 - 2026-09-23: Crypto tools are live on the connector (`get_crypto_*`,
