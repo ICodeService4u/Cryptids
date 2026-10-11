@@ -26,7 +26,7 @@ tier, versus 0.95% taker).
 
 ## Hard caps (per CLAUDE.md rule 2)
 
-- Buy size: **$200.00** per buy order (`dollar_amount: "200.00"`).
+- Buy size: **$300.00** per buy order (`dollar_amount: "300.00"`).
 - New buy orders per tick: at most **1 per coin** (so up to 5 per tick).
 - Open buys per coin: at most **1**. Never place a buy for a coin that
   already has an open loop buy order (`initiator_type: agentic`).
@@ -129,7 +129,7 @@ as the anchor, so under source 2 never price a sell at the ask (see step 3).
    - if already held, the position has a usable cost basis (see **Average
      cost**) — a held coin without one never qualifies, and
    - it has no open loop buy order.
-   Buy **every** qualifying coin, one $200 maker limit buy each (see
+   Buy **every** qualifying coin, one $300 maker limit buy each (see
    execution rules), working from the largest drop versus `open_price` to
    the smallest. Before each buy, re-check `crypto_buying_power` (open buys
    placed earlier this tick reserve cash); if it can't cover the buy, stop
@@ -155,6 +155,20 @@ flag them. They are all closed; there is nothing to manage.
   - XRP limit sell `6ab5de9e-6772-46ce-890f-a7472dec1d81` (canceled)
   - XRP market sell `6ab5df88-b978-4f50-ba66-f24199473987`, 132.317 filled
   - ADA market sell `6ab5df8b-7265-425e-9fcf-a0d328657e41`, 834.6 filled
+
+  Afterwards the account held no crypto and no open orders, only cash.
+
+- 2026-10-11 13:35–13:36 ET (17:35–17:36 UTC): owner exited ETH, XRP, SOL
+  and ADA. Cancelled the loop's four take-profit sells, then sold all four
+  at market:
+  - ADA limit sell `6ac8805d-de25-4466-a865-166f0f066aa8` (canceled)
+  - SOL limit sell `6ac7bef0-d87a-44ee-835a-5cf62112321a` (canceled)
+  - XRP limit sell `6ac7beed-b0a4-42b3-a35a-d66c13e65aa1` (canceled)
+  - ETH limit sell `6ac7beea-c6f8-4088-a738-623701c4d888` (canceled)
+  - ETH market sell `6acbc91b-67a8-45b9-98e3-67b64103c255`, 0.081054 filled
+  - XRP market sell `6acbc91c-ee4f-458c-b3a4-2408c4b4385e`, 147.301 filled
+  - SOL market sell `6acbc91d-5c2b-4479-962d-149ecb2f0b1f`, 1.82875 filled
+  - ADA market sell `6acbc91e-29be-4bf0-96f3-d497888d9cdf`, 3372.51 filled
 
   Afterwards the account held no crypto and no open orders, only cash.
 
