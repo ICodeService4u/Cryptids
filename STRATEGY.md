@@ -65,19 +65,20 @@ Never from memory of past ticks. Use the first source that works; if
 neither does, the position has **no usable cost basis**.
 
 **1. Position cost basis.** From the position itself
-(`get_crypto_positions`), summing over **every** entry in the coin's
-`cost_bases`:
+(`get_crypto_positions`), summing the `direct_*` fields over **every** entry
+in the coin's `cost_bases`:
 
 ```
-average cost = (Σ direct_cost_basis + Σ intraday_cost_basis)
-             / (Σ direct_quantity   + Σ intraday_quantity)
+average cost = Σ direct_cost_basis / Σ direct_quantity
 ```
 
-Today's buys are reported under `intraday_*` and roll into `direct_*` after
-the day closes, so a coin bought across several days has part of its cost in
-each — always add both. The cost basis excludes the buy fee. Usable only if
-the summed quantity is above 0 and within one `min_order_quantity_increment`
-of the position's `quantity`.
+The `direct_*` fields already cover every held unit with a captured cost,
+today's buys included. The `intraday_*` fields are the part of that bought
+today, not a separate lot: a coin bought today shows the same quantity and
+cost under both, so adding them double-counts it (see the 2026-10-12
+cost-basis status note). Never add `intraday_*` to the sum. The cost basis
+excludes the buy fee. Usable only if Σ `direct_quantity` is above 0 and
+within one `min_order_quantity_increment` of the position's `quantity`.
 
 **2. Derived from the loop's sell** (fallback when source 1 isn't usable —
 the connector has been seen returning all-zero `cost_bases`). Every loop
@@ -212,3 +213,18 @@ flag them. They are all closed; there is nothing to manage.
   $300 maker buys placed by hand under those rules (ADA at 0.2381447, SOL
   at 106.98, both `initiator_type: agentic`); the loop manages them like
   its own.
+- 2026-10-12 (cost basis): The 18:16 ET tick left SOL without a take-profit
+  sell. The position held 2.79031 SOL from the owner's $300 buy (filled
+  18:00 ET at 106.98; cost 298.51 before the 1.49 fee), and its single
+  `cost_bases` entry read 2.79031 / 298.51 under `direct_*` **and**
+  2.79031 / 298.51 under `intraday_*`. Adding both, as **Average cost**
+  then said to, gave 5.58062 units for 2.79031 held, so source 1 failed
+  its quantity check; the owner's 2026-10-11 exit had cancelled every loop
+  sell, so source 2 had no anchor either. ADA's buy filled at 18:17 ET and
+  shows the same shape (1253.47 / 298.51 under both). The connector's own
+  field notes say an entry's per-unit cost is `direct_cost_basis /
+  direct_quantity` and that `intraday_*` only isolates today's still-held
+  portion of it, so `intraday_*` is a subset of `direct_*`, not a second
+  lot; the 2026-09-23 "roll into direct after the day closes" wording was
+  an assumption. Source 1 now sums `direct_*` only, which gives SOL
+  ≈ 106.98 and ADA ≈ 0.23815 with the full quantity accounted for.
