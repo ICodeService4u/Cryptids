@@ -41,14 +41,23 @@ tier, versus 0.95% taker).
 ## Maker-only execution
 
 - Order type is always `limit`. Never `market`, `stop_loss` or `stop_limit`.
+- Quote right before you price. Call `get_crypto_quotes` (with
+  `rhs_account_number`) immediately before each preview and price from
+  that quote, not from the tick's opening gather. The preview labels an
+  order maker or taker against the live book at the moment of the preview,
+  and a quote more than a few seconds old reads taker in a moving market
+  (see the 2026-10-12 status note).
 - Buys: limit price = current **bid** rounded **down** to the pair's
-  `min_order_price_increment`. Never at or above the ask.
+  `min_order_price_increment`, then **one increment lower**. Never at or
+  above the ask.
 - Sells: limit price is the take-profit price, and never below the current
-  **ask** (if price has already run past the target, use the ask, rounded
-  **up** to the increment).
+  **ask** (if price has already run past the target, use the ask rounded
+  **up** to the increment, then one increment higher).
 - Run `preview_crypto_order` first; place only if its `fee_rate` says
-  **maker**. If it says taker, or anything else differs from what was
-  intended, skip the order.
+  **maker**, and place at exactly the previewed price. If it says taker,
+  re-quote, re-price by the rules above and preview once more; if that
+  preview also says taker, skip the order. If anything else differs from
+  what was intended, skip the order.
 
 ## Average cost
 
@@ -133,8 +142,10 @@ as the anchor, so under source 2 never price a sell at the ask (see step 3).
    execution rules), working from the largest drop versus `open_price` to
    the smallest. Before each buy, re-check `crypto_buying_power` (open buys
    placed earlier this tick reserve cash); if it can't cover the buy, stop
-   buying for this tick. If a preview or placement errors, stop buying for
-   this tick (CLAUDE.md rule 7).
+   buying for this tick. A taker label on a preview is not an error: handle
+   it with the re-quote-and-retry rule under **Maker-only execution**, and
+   skip the coin if the retry also reads taker. If a preview or placement
+   errors, stop buying for this tick (CLAUDE.md rule 7).
 5. Otherwise do nothing. Doing nothing is the expected outcome of most
    ticks.
 
@@ -185,3 +196,19 @@ flag them. They are all closed; there is nothing to manage.
   XRP and ADA positions bought 2026-09-23, although the Robinhood app shows
   their average costs (XRP ≈ 1.504, ADA ≈ 0.23844). Average cost falls back
   to source 2 (derived from the loop's sell) for such positions.
+- 2026-10-12: The 17:46 ET tick skipped its ADA and SOL buys because both
+  previews read 0.95% taker. The fee tier and routing had not changed:
+  every loop limit order through 2026-10-09 was 0.5% maker, and previews
+  priced below the live bid still read 0.5% maker. The preview labels an
+  order against the live book at the moment of the preview, and a buy at
+  or above the live bid reads taker even when it is below the ask. The
+  tick had priced ADA at the bid from a quote 26 seconds old and SOL from
+  one 39 seconds old while the market was falling about 1.7% per quarter
+  hour, so both prices were at or above the live bid by preview time.
+  Quotes also show crossed books at times (bid above ask on BTC, SOL and
+  ETH that afternoon), so the quoted bid is not a guaranteed resting
+  price. Hence the quote-right-before-preview, one-increment-under and
+  retry-once rules under **Maker-only execution**. The owner then had two
+  $300 maker buys placed by hand under those rules (ADA at 0.2381447, SOL
+  at 106.98, both `initiator_type: agentic`); the loop manages them like
+  its own.
