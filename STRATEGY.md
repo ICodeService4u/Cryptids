@@ -12,7 +12,7 @@ ARMED: true
 
 Buy fear, sell greed, hold through drawdowns. Buy only on sharp daily drops,
 and only when the new buy lowers the average cost. Every position rests a
-limit sell at +10% over its average cost. There are **no stop-losses**: a
+limit sell at +5% over its average cost. There are **no stop-losses**: a
 position that drops is held (and may be averaged down) until the take-profit
 fills. Every order is a **maker** limit order (0.5% fee at the starting
 tier, versus 0.95% taker).
@@ -26,7 +26,7 @@ tier, versus 0.95% taker).
 
 ## Hard caps (per CLAUDE.md rule 2)
 
-- Buy size: **$300.00** per buy order (`dollar_amount: "300.00"`).
+- Buy size: **$400.00** per buy order (`dollar_amount: "400.00"`).
 - New buy orders per tick: at most **1 per coin** (so up to 5 per tick).
 - Open buys per coin: at most **1**. Never place a buy for a coin that
   already has an open loop buy order (`initiator_type: agentic`).
@@ -82,18 +82,22 @@ within one `min_order_quantity_increment` of the position's `quantity`.
 
 **2. Derived from the loop's sell** (fallback when source 1 isn't usable —
 the connector has been seen returning all-zero `cost_bases`). Every loop
-sell is priced at average cost × 1.10, so it records the average cost of
+sell is priced at average cost × 1.05, so it records the average cost of
 the units it covers. Requires exactly one open loop sell on the coin (the
 **anchor**):
 
 ```
 anchor qty  = anchor quantity − anchor cumulative_quantity
-anchor cost = anchor qty × anchor price / 1.10
+anchor cost = anchor qty × anchor price / 1.05
 new fills   = loop buys on the coin (side buy, initiator_type agentic,
               cumulative_quantity > 0) with updated_at ≥ anchor created_at
 average cost = (anchor cost + Σ new-fill average_price × cumulative_quantity)
              / (anchor qty  + Σ new-fill cumulative_quantity)
 ```
+
+A loop sell created before 2026-10-13 was priced at average cost × 1.10
+(the take-profit was +10% until then): for such an anchor divide by 1.10
+instead of 1.05.
 
 Fetch the new fills with `get_crypto_orders` (`symbol`, `side: buy`,
 `created_at_gte` a day before the anchor's `created_at`, then filter).
@@ -103,7 +107,7 @@ units can't be accounted for. Report which source you used in the summary
 whenever it is source 2.
 
 Rounding the sell price up makes the derived cost read at most one price
-increment ÷ 1.10 high, which is acceptable. The derivation is only as good
+increment ÷ 1.05 high, which is acceptable. The derivation is only as good
 as the anchor, so under source 2 never price a sell at the ask (see step 3).
 
 ## Each tick
@@ -118,12 +122,12 @@ as the anchor, so under source 2 never price a sell at the ask (see step 3).
    universe coin, the target is one open limit sell, entered by `quantity`,
    for the full held quantity (including coins already reserved by the
    loop's current sell), rounded down to `min_order_quantity_increment`, at
-   `average cost × 1.10` (see **Average cost**) rounded up to the price
+   `average cost × 1.05` (see **Average cost**) rounded up to the price
    increment.
    If there's no such sell, or its quantity or price doesn't match (e.g. a
    buy filled since it was placed), cancel the mismatched sell and place the
    correct one. Leave a matching sell alone; a price within one price
-   increment of the target counts as matching (dividing by 1.10 and
+   increment of the target counts as matching (dividing by 1.05 and
    multiplying back can round up a step). Work out the new sell's
    price and quantity **before** cancelling the old one — under source 2
    the old sell is the anchor. If the replacement can't be placed after the
@@ -228,3 +232,31 @@ flag them. They are all closed; there is nothing to manage.
   lot; the 2026-09-23 "roll into direct after the day closes" wording was
   an assumption. Source 1 now sums `direct_*` only, which gives SOL
   ≈ 106.98 and ADA ≈ 0.23815 with the full quantity accounted for.
+- 2026-10-13 (take-profit): Lowered the take-profit from +10% to +5% over
+  average cost to turn positions over faster. Fear buys enter at least 4%
+  under the previous close, so +5% is roughly a return to the previous
+  close (0.96 × 1.05 ≈ 1.008), while +10% needed about 5.6% above it. Of
+  the loop's seven closed positions through 2026-10-11, three had reached
+  +5% (the ADA take-profit fill on 10-04, and ADA at +8.2% and XRP at
+  +5.3% when the owner exited on 10-11) but only one reached +10% (that
+  ADA fill, 5.8 days after its buy). The owner's two manual exits (09-24,
+  10-11) closed positions between +1.8% and +8.2% at the 0.95% taker rate;
+  a resting +5% maker sell would have closed ADA and XRP on 10-11 at 0.5%.
+  Net per $300 round trip at 0.5% maker each way is $11.87 (3.96%) at +5%
+  versus $26.72 (8.91%) at +10%, so +5% needs about 2.25× as many fills to
+  match realized P&L per cycle; it also frees each buy's cash sooner under
+  the no-stop-loss rule. The owner had the open sells re-placed at × 1.05
+  by hand on 2026-10-12 20:32–20:34 ET through the connector (so they show
+  `initiator_type: agentic`); the loop manages them like its own:
+  - ADA sell `6acd7c8e-2f0f-4cdf-b0ab-1b8349c449c0`, 1253.47 at 0.2500543
+  - SOL sell `6acd7c8f-f4f9-4226-8516-8b2d76603cee`, 2.79031 at 112.33
+  - ETH sell `6acd7ca2-5fda-401b-87c9-9dc81de117e1`, 0.123203 at 2544.06
+  - XRP sell `6acd7ca3-70fd-4727-81b0-2f71a2136025`, 224.441 at 1.397
+
+  The 20:31 ET tick, still on the +10% rule, ran at the same time: it
+  placed an ETH sell at 2665.21 and re-placed XRP at 1.464 (the 20:18 tick
+  had put XRP at 1.47, seven increments above its 1.463 target). Both were
+  cancelled along with the earlier ADA 0.2619616 and SOL 117.68 sells.
+- 2026-10-13 (buy size): Raised the buy size from $300 to $400 after the
+  owner deposited another $1,000 (pending on 2026-10-12; cash was
+  $2,275.06 before it).
