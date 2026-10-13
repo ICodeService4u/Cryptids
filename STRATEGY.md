@@ -26,7 +26,7 @@ tier, versus 0.95% taker).
 
 ## Hard caps (per CLAUDE.md rule 2)
 
-- Buy size: **$300.00** per buy order (`dollar_amount: "300.00"`).
+- Buy size: **$400.00** per buy order (`dollar_amount: "400.00"`).
 - New buy orders per tick: at most **1 per coin** (so up to 5 per tick).
 - Open buys per coin: at most **1**. Never place a buy for a coin that
   already has an open loop buy order (`initiator_type: agentic`).
@@ -244,7 +244,19 @@ flag them. They are all closed; there is nothing to manage.
   a resting +5% maker sell would have closed ADA and XRP on 10-11 at 0.5%.
   Net per $300 round trip at 0.5% maker each way is $11.87 (3.96%) at +5%
   versus $26.72 (8.91%) at +10%, so +5% needs about 2.25× as many fills to
-  match realized P&L per cycle; it also frees the $300 sooner under the
-  no-stop-loss rule. The sells open at the change (ADA 0.2619616, SOL
-  117.68, XRP 1.47) were priced at × 1.10 and are replaced by step 3 on
-  the first tick that runs with this file.
+  match realized P&L per cycle; it also frees each buy's cash sooner under
+  the no-stop-loss rule. The owner had the open sells re-placed at × 1.05
+  by hand on 2026-10-12 20:32–20:34 ET through the connector (so they show
+  `initiator_type: agentic`); the loop manages them like its own:
+  - ADA sell `6acd7c8e-2f0f-4cdf-b0ab-1b8349c449c0`, 1253.47 at 0.2500543
+  - SOL sell `6acd7c8f-f4f9-4226-8516-8b2d76603cee`, 2.79031 at 112.33
+  - ETH sell `6acd7ca2-5fda-401b-87c9-9dc81de117e1`, 0.123203 at 2544.06
+  - XRP sell `6acd7ca3-70fd-4727-81b0-2f71a2136025`, 224.441 at 1.397
+
+  The 20:31 ET tick, still on the +10% rule, ran at the same time: it
+  placed an ETH sell at 2665.21 and re-placed XRP at 1.464 (the 20:18 tick
+  had put XRP at 1.47, seven increments above its 1.463 target). Both were
+  cancelled along with the earlier ADA 0.2619616 and SOL 117.68 sells.
+- 2026-10-13 (buy size): Raised the buy size from $300 to $400 after the
+  owner deposited another $1,000 (pending on 2026-10-12; cash was
+  $2,275.06 before it).
