@@ -143,7 +143,7 @@ as the anchor, so under source 2 never price a sell at the ask (see step 3).
    - if already held, the position has a usable cost basis (see **Average
      cost**) — a held coin without one never qualifies, and
    - it has no open loop buy order.
-   Buy **every** qualifying coin, one $300 maker limit buy each (see
+   Buy **every** qualifying coin, one $400 maker limit buy each (see
    execution rules), working from the largest drop versus `open_price` to
    the smallest. Before each buy, re-check `crypto_buying_power` (open buys
    placed earlier this tick reserve cash); if it can't cover the buy, stop
@@ -242,8 +242,8 @@ flag them. They are all closed; there is nothing to manage.
   ADA fill, 5.8 days after its buy). The owner's two manual exits (09-24,
   10-11) closed positions between +1.8% and +8.2% at the 0.95% taker rate;
   a resting +5% maker sell would have closed ADA and XRP on 10-11 at 0.5%.
-  Net per $300 round trip at 0.5% maker each way is $11.87 (3.96%) at +5%
-  versus $26.72 (8.91%) at +10%, so +5% needs about 2.25× as many fills to
+  Net per $400 round trip at 0.5% maker each way is $15.82 (3.96%) at +5%
+  versus $35.62 (8.91%) at +10%, so +5% needs about 2.25× as many fills to
   match realized P&L per cycle; it also frees each buy's cash sooner under
   the no-stop-loss rule. The owner had the open sells re-placed at × 1.05
   by hand on 2026-10-12 20:32–20:34 ET through the connector (so they show
