@@ -38,7 +38,23 @@ tier, versus 0.95% taker).
   (previous midnight close) from `get_crypto_quotes`. This is the only loss
   rule — nothing is ever sold at a loss by this loop.
 
-## Maker-only execution
+## Dust
+
+A **dust** position is a held universe coin whose `quantity × mark_price` is
+under **$1.00**, or whose `quantity` is below the pair's
+`min_order_quantity_increment` (too small to sell). The loop ignores dust
+completely:
+
+- A coin holding only dust counts as **not held**: no take-profit sell, no
+  "no usable cost basis" report, no anomaly, and the fear-buy rules treat it
+  as unheld (the 4%-below-previous-close test alone).
+- Dust never counts toward any cap or the buy halt estimate, and the loop
+  never tries to sell, cancel or otherwise manage it.
+- When a coin holds dust plus a real position, ignore the dust units: use
+  the real position's cost basis, and the sell quantity is the full held
+  quantity rounded down to `min_order_quantity_increment`, as usual. Dust
+  with a zero `direct_cost_basis` is not a basis failure.
+
 
 - Order type is always `limit`. Never `market`, `stop_loss` or `stop_limit`.
 - Quote right before you price. Call `get_crypto_quotes` (with
@@ -262,3 +278,9 @@ flag them. They are all closed; there is nothing to manage.
   $2,275.06 before it).
 - 2026-10-18 (buy size): Raised the buy size from $400 to $500 after the
   owner deposited another $1,000.
+- 2026-10-21 (dust): The owner closed ETH, SOL and ADA with maker limit sells
+  at the ask (16:36 ET). ETH and SOL filled in full. ADA filled 6778.5852259
+  of 6778.59 and the exchange cancelled the 0.0047741 ADA remainder, leaving
+  an unsellable dust position with `direct_cost_basis` 0, which the loop
+  would have reported as a no-cost-basis anomaly and halted buying on. The
+  **Dust** section above makes the loop ignore such positions.
